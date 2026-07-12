@@ -1,0 +1,65 @@
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------- Download RawSSG binary ----------
+      - name: Get latest RawSSG release
+        id: rawssg
+        run: |
+          REPO="mroczect/rawssg"
+          TAG=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | jq -r .tag_name)
+          echo "Latest RawSSG release: $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Download RawSSG binary (Linux)
+        run: |
+          curl -fsSL "https://github.com/mroczect/rawssg/releases/download/${{ steps.rawssg.outputs.tag }}/rawssg-ubuntu-latest.tar.gz" -o rawssg.tar.gz
+          tar -xzf rawssg.tar.gz
+          chmod +x rawssg
+          sudo mv rawssg /usr/local/bin/
+
+      # ---------- Build documentation ----------
+      - name: Set production base URL
+        working-directory: docs
+        run: |
+          # Ganti 'mroczect' dan 'libcagekeygen' dengan username dan nama repo kamu
+          sed -i 's|base_url:.*|base_url: "https://mroczect.github.io/libcagekeygen/"|' config.yaml
+          cat config.yaml
+
+      - name: Compile site with RawSSG
+        working-directory: docs
+        run: rawssg compile
+
+      # ---------- Deploy ----------
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
