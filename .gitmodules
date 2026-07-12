@@ -1,3 +1,0 @@
-[submodule "include/libeddsa"]
-	path = include/libeddsa
-	url = https://github.com/phlay/libeddsa
