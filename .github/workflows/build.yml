@@ -1,0 +1,50 @@
+# ----------------------------------------------------------------------
+# Build & Test – runs on every push to master and every pull request.
+# Skips files that only affect documentation (docs/ and *.md).
+# Builds a static library and runs the test suite on Ubuntu and macOS.
+# ----------------------------------------------------------------------
+name: Build & Test
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "README.txt"
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "README.txt"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false # run all OS jobs even if one fails
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build static library
+        run: make # Makefile default target
+
+      - name: Run test suite
+        run: make test
+
+      - name: Prepare artifact (library + header)
+        run: |
+          mkdir -p artifact
+          cp libcagekeygen.a artifact/
+          cp include/libcagekeygen.h artifact/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libcagekeygen-${{ matrix.os }}
+          path: artifact/
