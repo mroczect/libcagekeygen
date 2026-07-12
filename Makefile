@@ -1,111 +1,158 @@
-# ==============================================================================
-# Makefile – Convenience wrapper around CMake for libcagekeygen.
-#
-# This Makefile provides simple targets for building, testing, installing,
-# and cleaning the library without needing to remember the full CMake
-# invocations.  It is intended for developers who prefer a `make` interface
-# or for quick one‑off builds.
-#
-# All actual compilation is delegated to CMake; this file only calls CMake
-# and the generated build system (e.g., Make or Ninja).  Therefore CMake
-# ≥ 3.12 is still required.
-#
+# ============================================================================
+# Makefile – Standalone build & install for libcagekeygen (no CMake required)
+# ============================================================================
 # Usage:
-#   make             – build the library in Release mode (default)
-#   make BUILD_TYPE=Debug  – build in Debug mode
-#   make test        – build and run the test suite (Debug mode)
-#   make asan        – build and run tests with AddressSanitizer/UBSan
-#   make install     – install the library and header system‑wide
-#   make clean       – remove all build artifacts
+#   make                  Build static library (libcagekeygen.a)
+#   make shared           Build shared library (libcagekeygen.so / .dylib)
+#   make test             Build and run test suite
+#   make install          Install to /usr/local (override with PREFIX)
+#   make uninstall        Remove installed files
+#   make clean            Clean build artifacts
 #
-# ------------------------------------------------------------------------------
 # Variables you can override:
-#   BUILD_TYPE       – CMake build type (Release, Debug, MinSizeRel, RelWithDebInfo)
-#                      Default: Release
-# ==============================================================================
+#   CC                    C compiler (default: cc)
+#   PREFIX                Installation prefix (default: /usr/local)
+#   DESTDIR               Staging directory for package creation
+#   CFLAGS                Extra C compiler flags
+#   BUILD_TYPE            Debug or Release (default: Release)
+# ============================================================================
 
-# Disable built‑in suffix rules and implicit pattern rules for speed.
-.PHONY: all clean build test asan install
+.PHONY: all static shared test install uninstall clean
 
-# ------------------------------------------------------------------------------
-# BUILD_TYPE : CMake build configuration.
-#
-# Valid values: Release, Debug, MinSizeRel, RelWithDebInfo.
-# The default (Release) builds with optimisations and without debug symbols.
-# Use BUILD_TYPE=Debug for development and testing.
-# ------------------------------------------------------------------------------
-BUILD_TYPE ?= Release
+# Compiler & tools
+CC      ?= cc
+AR      ?= ar
+RANLIB  ?= ranlib
+RM      ?= rm -f
+MKDIR   ?= mkdir -p
+INSTALL ?= install
 
-# ------------------------------------------------------------------------------
-# all : Default target – build the library.
-# ------------------------------------------------------------------------------
-all: build
+# Paths
+PREFIX   ?= /usr/local
+INCDIR   ?= $(DESTDIR)$(PREFIX)/include
+LIBDIR   ?= $(DESTDIR)$(PREFIX)/lib
+SRCDIR   := src
+INCDIRS  := include
+TESTDIR  := test
 
-# ------------------------------------------------------------------------------
-# build : Configure and compile the library.
-#
-# Creates a `build/` directory, runs CMake to generate the native build
-# system, then invokes the build tool (e.g., make or ninja) to compile the
-# library.  The build type is controlled by the BUILD_TYPE variable.
-#
-# Example:
-#   make build BUILD_TYPE=Debug
-# ------------------------------------------------------------------------------
-build:
-	cmake -B build -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) .
-	cmake --build build
+# Source files
+SRCS     := $(SRCDIR)/curve25519-donna.c \
+            $(SRCDIR)/gen.c \
+            $(SRCDIR)/io.c \
+            $(SRCDIR)/error.c \
+            $(SRCDIR)/lib.c
 
-# ------------------------------------------------------------------------------
-# clean : Remove all build artifacts and test directories.
-#
-# Deletes the `build/`, `build_test/`, and (if present) `build_asan/`
-# directories entirely.  This ensures a completely fresh start for the
-# next build.
-# ------------------------------------------------------------------------------
+# Object files
+OBJS     := $(SRCS:.c=.o)
+
+# Test sources & objects
+TEST_SRCS := $(TESTDIR)/test.c \
+             $(TESTDIR)/test_gen.c \
+             $(TESTDIR)/test_io.c \
+             $(TESTDIR)/test_random.c
+TEST_OBJS := $(TEST_SRCS:.c=.o)
+TEST_EXE  := test_libcagekeygen
+
+# Library names
+STATIC_LIB  := libcagekeygen.a
+ifeq ($(shell uname -s),Darwin)
+    SHARED_LIB := libcagekeygen.dylib
+    SHARED_FLAG := -dynamiclib
+    SHARED_EXT  := .dylib
+else
+    SHARED_LIB := libcagekeygen.so
+    SHARED_FLAG := -shared
+    SHARED_EXT  := .so
+endif
+
+# Compiler flags
+BASE_CFLAGS := -std=c11 -I$(INCDIRS)
+WARN_FLAGS  := -Wall -Wextra -Wpedantic
+OPT_FLAGS   :=
+ifeq ($(BUILD_TYPE),Debug)
+    OPT_FLAGS := -g -O0 -DDEBUG
+    SAN_FLAGS := -fsanitize=address,undefined -fno-omit-frame-pointer
+else
+    OPT_FLAGS := -O3 -DNDEBUG
+    SAN_FLAGS :=
+endif
+CFLAGS_ALL := $(BASE_CFLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS) $(CFLAGS)
+
+# Platform-specific
+ifeq ($(OS),Windows_NT)
+    # Windows not supported with plain Makefile; use CMake
+    $(error Use CMake for Windows builds)
+endif
+
+# ============================================================================
+# Targets
+# ============================================================================
+
+all: static
+
+static: $(STATIC_LIB)
+
+shared: $(SHARED_LIB)
+
+# Build static library
+$(STATIC_LIB): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+	@echo "  ✓ Built $@"
+
+# Build shared library
+$(SHARED_LIB): $(OBJS)
+	$(CC) $(SHARED_FLAG) -o $@ $(OBJS) $(LDFLAGS)
+	@echo "  ✓ Built $@"
+
+# Compile C sources
+$(SRCDIR)/%.o: $(SRCDIR)/%.c $(INCDIRS)/libcagekeygen.h
+	$(CC) $(CFLAGS_ALL) -c $< -o $@
+
+# ============================================================================
+# Test
+# ============================================================================
+
+test: $(TEST_EXE)
+	./$(TEST_EXE)
+
+$(TEST_EXE): $(STATIC_LIB) $(TEST_OBJS)
+	$(CC) $(CFLAGS_ALL) -o $@ $(TEST_OBJS) -L. -lcagekeygen $(LDFLAGS)
+
+$(TESTDIR)/%.o: $(TESTDIR)/%.c $(INCDIRS)/libcagekeygen.h $(TESTDIR)/test_utils.h
+	$(CC) $(CFLAGS_ALL) -I$(INCDIRS) -c $< -o $@
+
+# ============================================================================
+# Install / Uninstall
+# ============================================================================
+
+install: $(STATIC_LIB)
+	$(MKDIR) $(INCDIR) $(LIBDIR)
+	$(INSTALL) -m 644 $(INCDIRS)/libcagekeygen.h $(INCDIR)/
+	$(INSTALL) -m 644 $(STATIC_LIB) $(LIBDIR)/
+	@echo "✓ Installed to $(PREFIX)"
+	@echo "  Header : $(INCDIR)/libcagekeygen.h"
+	@echo "  Library: $(LIBDIR)/$(STATIC_LIB)"
+
+install-shared: $(SHARED_LIB)
+	$(MKDIR) $(INCDIR) $(LIBDIR)
+	$(INSTALL) -m 644 $(INCDIRS)/libcagekeygen.h $(INCDIR)/
+	$(INSTALL) -m 755 $(SHARED_LIB) $(LIBDIR)/
+	@if [ "$(shell uname -s)" = "Linux" ]; then \
+		ldconfig || true; \
+	fi
+	@echo "✓ Installed shared library to $(PREFIX)"
+
+uninstall:
+	$(RM) $(INCDIR)/libcagekeygen.h
+	$(RM) $(LIBDIR)/libcagekeygen.a
+	$(RM) $(LIBDIR)/libcagekeygen$(SHARED_EXT)
+	@echo "✓ Uninstalled from $(PREFIX)"
+
+# ============================================================================
+# Clean
+# ============================================================================
+
 clean:
-	rm -rf build build_test build_asan
-
-# ------------------------------------------------------------------------------
-# install : Build the library (if necessary) and install it.
-#
-# Requires that `build/` already contains a configured and compiled project.
-# Calls `cmake --install build` which installs the library to the system
-# directories (e.g., /usr/local/lib and /usr/local/include) as specified
-# by the CMake installation rules.
-#
-# Tip: Set DESTDIR or CMAKE_INSTALL_PREFIX if you want to install to a
-#      non‑standard location.
-# ------------------------------------------------------------------------------
-install: build
-	cmake --install build
-
-# ------------------------------------------------------------------------------
-# test : Build the library and test executable in Debug mode, then run all tests.
-#
-# This target creates a separate build directory (`build_test/`) to avoid
-# interfering with a release build.  It enables the BUILD_TESTING option,
-# compiles everything, and runs the tests via CTest.  Test output is shown
-# only on failure (`--output-on-failure`).
-#
-# The build type is forced to Debug so that assertions and debugging
-# symbols are available during testing.
-# ------------------------------------------------------------------------------
-test:
-	cmake -B build_test -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug .
-	cmake --build build_test
-	cd build_test && ctest --output-on-failure
-
-# ------------------------------------------------------------------------------
-# asan : Build and test with AddressSanitizer and UndefinedBehaviorSanitizer.
-#
-# Creates yet another separate build directory (`build_asan/`).  The
-# ENABLE_SANITIZERS option is turned ON, which adds
-# `-fsanitize=address,undefined` to both compile and link flags.  This
-# helps catch memory errors and undefined behaviour.
-#
-# Like `test`, the build type is Debug to get full error reporting.
-# ------------------------------------------------------------------------------
-asan:
-	cmake -B build_asan -DBUILD_TESTING=ON -DENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug .
-	cmake --build build_asan
-	cd build_asan && ctest --output-on-failure
+	$(RM) $(OBJS) $(TEST_OBJS) $(STATIC_LIB) $(SHARED_LIB) $(TEST_EXE)
+	@echo "✓ Cleaned"
