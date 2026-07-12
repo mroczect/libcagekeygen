@@ -69,11 +69,11 @@ The library will be placed inside the `build/` directory.
 
 ### CMake options
 
-| Option              | Default | Description                                      |
-|---------------------|---------|--------------------------------------------------|
-| `BUILD_SHARED_LIBS` | `OFF`   | Build a shared library instead of static         |
-| `BUILD_TESTING`     | `OFF`   | Build the test suite                             |
-| `ENABLE_SANITIZERS` | `OFF`   | Compile with AddressSanitizer and UBSan          |
+| Option              | Default | Description                              |
+| ------------------- | ------- | ---------------------------------------- |
+| `BUILD_SHARED_LIBS` | `OFF`   | Build a shared library instead of static |
+| `BUILD_TESTING`     | `OFF`   | Build the test suite                     |
+| `ENABLE_SANITIZERS` | `OFF`   | Compile with AddressSanitizer and UBSan  |
 
 Example with tests and sanitizers:
 

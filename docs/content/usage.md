@@ -70,13 +70,13 @@ systems, add `bcrypt.lib` manually.
 The library never allocates memory. You must provide buffers of the correct
 size. **Always use the provided macros** – do not hard‑code numbers.
 
-| Macro                           | Value | Meaning                                                   |
-|---------------------------------|-------|-----------------------------------------------------------|
-| `AGE_KEY_BYTES`                 | 32    | Size of a raw key (public or secret) in bytes             |
-| `AGE_PUBLIC_KEY_STRING_LENGTH`  | 56    | Length of a public key string, excluding null terminator  |
-| `AGE_SECRET_KEY_STRING_LENGTH`  | 67    | Length of a secret key string, excluding null terminator  |
-| `AGE_PUBLIC_KEY_BUF_SIZE`       | 57    | Minimum buffer size for a public key string (`LENGTH+1`)  |
-| `AGE_SECRET_KEY_BUF_SIZE`       | 68    | Minimum buffer size for a secret key string (`LENGTH+1`)  |
+| Macro                          | Value | Meaning                                                  |
+| ------------------------------ | ----- | -------------------------------------------------------- |
+| `AGE_KEY_BYTES`                | 32    | Size of a raw key (public or secret) in bytes            |
+| `AGE_PUBLIC_KEY_STRING_LENGTH` | 56    | Length of a public key string, excluding null terminator |
+| `AGE_SECRET_KEY_STRING_LENGTH` | 67    | Length of a secret key string, excluding null terminator |
+| `AGE_PUBLIC_KEY_BUF_SIZE`      | 57    | Minimum buffer size for a public key string (`LENGTH+1`) |
+| `AGE_SECRET_KEY_BUF_SIZE`      | 68    | Minimum buffer size for a secret key string (`LENGTH+1`) |
 
 Example declarations:
 
@@ -98,15 +98,15 @@ compiler warn about obvious mistakes, but it is not a runtime check.
 Every public function returns an `age_error_t`. **Always check the return
 value** before using the output buffers. The possible error codes are:
 
-| Error code                  | Value | Meaning                                                        |
-|-----------------------------|-------|----------------------------------------------------------------|
-| `AGE_OK`                    | 0     | Success                                                        |
-| `AGE_ERR_NULL_POINTER`      | -1    | A required pointer was `NULL` (reserved, currently not used)   |
-| `AGE_ERR_RANDOM_FAILED`     | -2    | System random source could not provide entropy                 |
-| `AGE_ERR_BUFFER_TOO_SMALL`  | -3    | Output buffer too small (reserved, not actively used)          |
-| `AGE_ERR_INVALID_FORMAT`    | -4    | Input string does not match the expected age format            |
-| `AGE_ERR_KEYGEN_FAILED`     | -5    | Key generation produced a weak (all‑zero) public key           |
-| `AGE_ERR_WEAK_PUBLIC_KEY`   | -6    | Decoded public key is the forbidden all‑zero value             |
+| Error code                 | Value | Meaning                                                      |
+| -------------------------- | ----- | ------------------------------------------------------------ |
+| `AGE_OK`                   | 0     | Success                                                      |
+| `AGE_ERR_NULL_POINTER`     | -1    | A required pointer was `NULL` (reserved, currently not used) |
+| `AGE_ERR_RANDOM_FAILED`    | -2    | System random source could not provide entropy               |
+| `AGE_ERR_BUFFER_TOO_SMALL` | -3    | Output buffer too small (reserved, not actively used)        |
+| `AGE_ERR_INVALID_FORMAT`   | -4    | Input string does not match the expected age format          |
+| `AGE_ERR_KEYGEN_FAILED`    | -5    | Key generation produced a weak (all‑zero) public key         |
+| `AGE_ERR_WEAK_PUBLIC_KEY`  | -6    | Decoded public key is the forbidden all‑zero value           |
 
 Obtain a human‑readable description with `age_error_string()`:
 
@@ -141,6 +141,7 @@ age_error_t age_generate_keypair(
 ```
 
 This function:
+
 1. Fills `secret_key` with 32 bytes of cryptographically secure random data
    from the operating system.
 2. Computes the corresponding public key using the X25519 function:
@@ -282,6 +283,7 @@ age_error_t age_string_to_secret_key(
 ```
 
 Validates:
+
 1. Exact length (67 printable characters).
 2. Prefix `AGE-SECRET-KEY-1`.
 3. Valid Bech32 characters.

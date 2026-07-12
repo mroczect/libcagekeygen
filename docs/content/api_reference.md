@@ -17,13 +17,13 @@ Buffer sizes are defined as preprocessor macros. Always use these macros
 instead of hard‑coding numbers to ensure correct buffer sizes and forward
 compatibility.
 
-| Macro | Value | Description |
-|-------|-------|-------------|
-| `AGE_KEY_BYTES` | `32` | Size of a raw X25519 key in bytes (256 bits). Both public and secret keys are exactly 32 bytes. |
-| `AGE_PUBLIC_KEY_STRING_LENGTH` | `56` | Length of a public key string in characters, **excluding** the null terminator. Format: `"age1"` + 52 Bech32 chars. |
-| `AGE_SECRET_KEY_STRING_LENGTH` | `67` | Length of a secret key string in characters, **excluding** the null terminator. Format: `"AGE-SECRET-KEY-1"` + 52 Bech32 chars. |
-| `AGE_PUBLIC_KEY_BUF_SIZE` | `57` | Minimum buffer size for a null‑terminated public key string (`LENGTH + 1`). |
-| `AGE_SECRET_KEY_BUF_SIZE` | `68` | Minimum buffer size for a null‑terminated secret key string (`LENGTH + 1`). |
+| Macro                          | Value | Description                                                                                                                     |
+| ------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `AGE_KEY_BYTES`                | `32`  | Size of a raw X25519 key in bytes (256 bits). Both public and secret keys are exactly 32 bytes.                                 |
+| `AGE_PUBLIC_KEY_STRING_LENGTH` | `56`  | Length of a public key string in characters, **excluding** the null terminator. Format: `"age1"` + 52 Bech32 chars.             |
+| `AGE_SECRET_KEY_STRING_LENGTH` | `67`  | Length of a secret key string in characters, **excluding** the null terminator. Format: `"AGE-SECRET-KEY-1"` + 52 Bech32 chars. |
+| `AGE_PUBLIC_KEY_BUF_SIZE`      | `57`  | Minimum buffer size for a null‑terminated public key string (`LENGTH + 1`).                                                     |
+| `AGE_SECRET_KEY_BUF_SIZE`      | `68`  | Minimum buffer size for a null‑terminated secret key string (`LENGTH + 1`).                                                     |
 
 ### Visual representation of the string formats
 
@@ -47,15 +47,15 @@ Both strings are printable ASCII and do **not** contain any whitespace.
 
 All library functions return an `age_error_t` value. The possible codes are:
 
-| Enum constant | Value | Description |
-|---------------|-------|-------------|
-| `AGE_OK` | `0` | Success. |
-| `AGE_ERR_NULL_POINTER` | `-1` | A required pointer argument was `NULL` (reserved; currently not returned). |
-| `AGE_ERR_RANDOM_FAILED` | `-2` | The system's secure random source could not provide enough entropy. |
-| `AGE_ERR_BUFFER_TOO_SMALL` | `-3` | An output buffer is too small to hold the result (reserved; not actively used). |
-| `AGE_ERR_INVALID_FORMAT` | `-4` | Input string does not match the expected age format (wrong length, bad prefix, or illegal characters). |
-| `AGE_ERR_KEYGEN_FAILED` | `-5` | Key generation produced a weak (all‑zero) public key. This is extremely unlikely but checked for safety. |
-| `AGE_ERR_WEAK_PUBLIC_KEY` | `-6` | A decoded public key is the forbidden all‑zero value. |
+| Enum constant              | Value | Description                                                                                              |
+| -------------------------- | ----- | -------------------------------------------------------------------------------------------------------- |
+| `AGE_OK`                   | `0`   | Success.                                                                                                 |
+| `AGE_ERR_NULL_POINTER`     | `-1`  | A required pointer argument was `NULL` (reserved; currently not returned).                               |
+| `AGE_ERR_RANDOM_FAILED`    | `-2`  | The system's secure random source could not provide enough entropy.                                      |
+| `AGE_ERR_BUFFER_TOO_SMALL` | `-3`  | An output buffer is too small to hold the result (reserved; not actively used).                          |
+| `AGE_ERR_INVALID_FORMAT`   | `-4`  | Input string does not match the expected age format (wrong length, bad prefix, or illegal characters).   |
+| `AGE_ERR_KEYGEN_FAILED`    | `-5`  | Key generation produced a weak (all‑zero) public key. This is extremely unlikely but checked for safety. |
+| `AGE_ERR_WEAK_PUBLIC_KEY`  | `-6`  | A decoded public key is the forbidden all‑zero value.                                                    |
 
 Use `age_error_string()` to obtain a human‑readable description of any code.
 
@@ -97,18 +97,21 @@ probability ≈ 2⁻²⁵⁶), the function returns `AGE_ERR_KEYGEN_FAILED` and
 the output buffers should not be used. A fresh call will almost certainly
 succeed.
 
-**Parameters**  
+**Parameters**
+
 - `public_key` – Buffer of exactly `AGE_KEY_BYTES` bytes. On success,
   receives the newly generated public key.
 - `secret_key` – Buffer of exactly `AGE_KEY_BYTES` bytes. On success,
   receives the newly generated secret key.
 
-**Return values**  
+**Return values**
+
 - `AGE_OK` – Success.
 - `AGE_ERR_RANDOM_FAILED` – The system random source failed.
 - `AGE_ERR_KEYGEN_FAILED` – The computed public key was all zeros (retry).
 
-**Notes**  
+**Notes**
+
 - The raw secret key is **not** clamped by this function. Clamping is
   performed internally by the Donna implementation during scalar
   multiplication. The raw bytes can be used directly with other X25519
@@ -117,7 +120,8 @@ succeed.
 - The secret key is a 256‑bit integer in little‑endian byte order. You
   should never expose it or transmit it insecurely.
 
-**Example**  
+**Example**
+
 ```c
 uint8_t pk[AGE_KEY_BYTES];
 uint8_t sk[AGE_KEY_BYTES];
@@ -146,17 +150,20 @@ If the derived public key is all zeros, the function returns
 `AGE_ERR_KEYGEN_FAILED` because the secret key is degenerate (e.g., all
 zeros).
 
-**Parameters**  
+**Parameters**
+
 - `secret_key` – A 32‑byte raw secret key. Must not be `NULL`.
 - `public_key` – Buffer of exactly `AGE_KEY_BYTES` bytes. On success,
   receives the derived public key.
 
-**Return values**  
+**Return values**
+
 - `AGE_OK` – Success.
 - `AGE_ERR_KEYGEN_FAILED` – The resulting public key is all zeros,
   indicating an invalid (weak) secret key.
 
-**Example**  
+**Example**
+
 ```c
 uint8_t pk[AGE_KEY_BYTES];
 if (age_public_key_from_secret_key(sk, pk) != AGE_OK) {
@@ -180,15 +187,18 @@ Encodes a raw 32‑byte public key into the standard age public key string
 format. The resulting string is null‑terminated and has the form
 `"age1"` followed by 52 Bech32 characters.
 
-**Parameters**  
+**Parameters**
+
 - `public_key` – A 32‑byte raw public key.
 - `buf` – Output buffer of at least `AGE_PUBLIC_KEY_BUF_SIZE` (57) bytes.
   On return, contains the null‑terminated string.
 
-**Return values**  
+**Return values**
+
 - Always returns `AGE_OK` (no error conditions in the current implementation).
 
-**Example**  
+**Example**
+
 ```c
 char pub_str[AGE_PUBLIC_KEY_BUF_SIZE];
 age_public_key_to_string(pk, pub_str);
@@ -211,15 +221,18 @@ Encodes a raw 32‑byte secret key into the standard age secret key string
 format. The string is null‑terminated and begins with
 `"AGE-SECRET-KEY-1"` followed by 52 Bech32 characters.
 
-**Parameters**  
+**Parameters**
+
 - `secret_key` – A 32‑byte raw secret key.
 - `buf` – Output buffer of at least `AGE_SECRET_KEY_BUF_SIZE` (68) bytes.
   On return, contains the null‑terminated string.
 
-**Return values**  
+**Return values**
+
 - Always returns `AGE_OK`.
 
-**Example**  
+**Example**
+
 ```c
 char sec_str[AGE_SECRET_KEY_BUF_SIZE];
 age_secret_key_to_string(sk, sec_str);
@@ -251,16 +264,19 @@ performs thorough validation:
 If any check fails, the function returns an appropriate error code and the
 output buffer is left in an undefined state.
 
-**Parameters**  
+**Parameters**
+
 - `str` – Null‑terminated input string with exactly 56 printable characters.
 - `public_key` – Buffer of `AGE_KEY_BYTES` bytes to receive the decoded key.
 
-**Return values**  
+**Return values**
+
 - `AGE_OK` – Decoding successful.
 - `AGE_ERR_INVALID_FORMAT` – The string does not match the expected format.
 - `AGE_ERR_WEAK_PUBLIC_KEY` – The decoded key is all zeros.
 
-**Example**  
+**Example**
+
 ```c
 uint8_t pk[AGE_KEY_BYTES];
 age_error_t err = age_string_to_public_key("age1...", pk);
@@ -293,15 +309,18 @@ Unlike `age_string_to_public_key`, this function does **not** reject
 all‑zero secret keys. An all‑zero secret key is considered a valid encoding,
 though it would be cryptographically unusable.
 
-**Parameters**  
+**Parameters**
+
 - `str` – Null‑terminated input string with exactly 67 printable characters.
 - `secret_key` – Buffer of `AGE_KEY_BYTES` bytes to receive the decoded key.
 
-**Return values**  
+**Return values**
+
 - `AGE_OK` – Decoding successful.
 - `AGE_ERR_INVALID_FORMAT` – The string fails any format check.
 
-**Example**  
+**Example**
+
 ```c
 uint8_t sk[AGE_KEY_BYTES];
 if (age_string_to_secret_key("AGE-SECRET-KEY-1...", sk) != AGE_OK) {
@@ -321,14 +340,16 @@ const char *age_error_string(age_error_t err);
 Returns a pointer to a static, null‑terminated string describing the given
 error code. The string is in English and must not be freed or modified.
 
-**Parameters**  
+**Parameters**
+
 - `err` – An error code returned by any library function.
 
 **Return value**  
 A pointer to a constant character string. Never returns `NULL`; unknown
 error codes yield `"unknown error"`.
 
-**Example**  
+**Example**
+
 ```c
 age_error_t ret = age_generate_keypair(pk, sk);
 if (ret != AGE_OK) {
@@ -408,11 +429,11 @@ gcc -o keygen_example keygen_example.c -lcagekeygen
 
 ## Buffer Size Rules
 
-| Buffer type | Use this macro | Required minimum size |
-|-------------|----------------|------------------------|
-| Raw key (public or secret) | `AGE_KEY_BYTES` | 32 bytes |
-| Public key string | `AGE_PUBLIC_KEY_BUF_SIZE` | 57 bytes (56 chars + null) |
-| Secret key string | `AGE_SECRET_KEY_BUF_SIZE` | 68 bytes (67 chars + null) |
+| Buffer type                | Use this macro            | Required minimum size      |
+| -------------------------- | ------------------------- | -------------------------- |
+| Raw key (public or secret) | `AGE_KEY_BYTES`           | 32 bytes                   |
+| Public key string          | `AGE_PUBLIC_KEY_BUF_SIZE` | 57 bytes (56 chars + null) |
+| Secret key string          | `AGE_SECRET_KEY_BUF_SIZE` | 68 bytes (67 chars + null) |
 
 Passing a buffer smaller than the required size results in undefined
 behaviour. The `static` keyword in the function prototypes helps the

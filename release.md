@@ -12,8 +12,8 @@
 - Generate secure X25519 key pairs (`age_generate_keypair`)
 - Derive a public key from an existing secret key (`age_public_key_from_secret_key`)
 - Encode raw keys to standard age strings:
-  - Public key  → `age1...`
-  - Secret key  → `AGE-SECRET-KEY-1...`
+  - Public key → `age1...`
+  - Secret key → `AGE-SECRET-KEY-1...`
 - Decode age strings back to raw keys with full validation
 - Human‑readable error messages via `age_error_string()`
 - All operations use caller‑provided buffers; no dynamic memory
@@ -25,18 +25,21 @@
 ## Pre‑built archives
 
 Each ZIP file contains:
+
 - `libcagekeygen.a` – static library
 - `libcagekeygen.h` – public header
 
 ## Installation
 
 ### From pre‑built archives
+
 ```
 unzip libcagekeygen-<platform>.zip
 gcc -I. myapp.c -L. -lcagekeygen -o myapp
 ```
 
 ### From source
+
 ```
 git clone https://github.com/mroczect/libcagekeygen.git
 cd libcagekeygen
@@ -48,6 +51,7 @@ make install
 
 Verify the integrity of the downloaded archives using the provided
 `SHA256SUMS` file:
+
 ```
 sha256sum -c SHA256SUMS
 ```

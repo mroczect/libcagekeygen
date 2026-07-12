@@ -254,13 +254,13 @@ pair.
 Every library function returns an `age_error_t`. **Always check the return
 value** before using the output buffers.
 
-| Return value                 | Meaning                                           |
-|------------------------------|---------------------------------------------------|
-| `AGE_OK`                     | Success                                           |
-| `AGE_ERR_RANDOM_FAILED`      | System random source failed                       |
-| `AGE_ERR_INVALID_FORMAT`     | Input string doesn’t match the expected format    |
-| `AGE_ERR_KEYGEN_FAILED`      | Generated public key was all‑zero (extremely rare)|
-| `AGE_ERR_WEAK_PUBLIC_KEY`    | Decoded public key is the forbidden all‑zero value|
+| Return value              | Meaning                                            |
+| ------------------------- | -------------------------------------------------- |
+| `AGE_OK`                  | Success                                            |
+| `AGE_ERR_RANDOM_FAILED`   | System random source failed                        |
+| `AGE_ERR_INVALID_FORMAT`  | Input string doesn’t match the expected format     |
+| `AGE_ERR_KEYGEN_FAILED`   | Generated public key was all‑zero (extremely rare) |
+| `AGE_ERR_WEAK_PUBLIC_KEY` | Decoded public key is the forbidden all‑zero value |
 
 Use `age_error_string(err)` to obtain a static human‑readable description.
 
