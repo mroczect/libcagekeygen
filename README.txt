@@ -47,84 +47,50 @@ FEATURES
 - Tested – includes a suite of deterministic and randomised tests (500
   iterations) runnable with `make test`.
 
-
 GETTING STARTED
 ---------------
 
 Prerequisites:
+  - A C compiler (GCC, Clang, …)
+  - GNU Make
 
-  - A C compiler (GCC, Clang, MSVC, …)
-  - CMake (≥ 3.12) – for building
-  - GNU Make (or compatible) – for the provided convenience Makefile
-  - Standard POSIX tools (ar, install) for installation
-
-Building from Source:
-
+QUICK INSTALL (recommended):
   git clone https://github.com/mroczect/libcagekeygen.git
   cd libcagekeygen
-  make
+  ./install.sh
 
-  This produces:
-    - libcagekeygen.a   – static library
-    - (no command‑line tool is included; the library is meant to be
-       linked into your own application)
+  This builds and installs the library to /usr/local.
+  Use --prefix=/usr for a different location:
+    ./install.sh --prefix=/usr
 
-  Object files are placed in the `build/` directory and are ignored by Git.
+  For shared library:
+    ./install.sh --shared
 
-Available Make targets:
+MANUAL BUILD & INSTALL:
+  make              # build static library (libcagekeygen.a)
+  make shared       # build shared library
+  make install      # install to /usr/local (override: make install PREFIX=/usr)
+  make uninstall    # remove installed files
+  make test         # build and run tests
+  make clean        # remove build artifacts
 
-  all        Build the library (default)
-  build      Same as `all`
-  clean      Remove all build artifacts (build, build_test, build_asan)
-  test       Build and run the test suite (Debug mode)
-  asan       Build and run tests with AddressSanitizer and UBSan
-  install    Install library and header to /usr/local (requires `build`)
+  Custom prefix:
+    make install PREFIX=/opt/mylibs
+    make uninstall PREFIX=/opt/mylibs
 
-  Override the compiler or flags:
+  Using the library after install:
+    gcc myapp.c -lcagekeygen -o myapp
+    # or
+    gcc myapp.c -I/usr/local/include -L/usr/local/lib -lcagekeygen -o myapp
 
-    make CC=clang BUILD_TYPE=Debug
+BUILD WITH CMAKE (alternative):
+  cmake -B build -DCMAKE_BUILD_TYPE=Release .
+  cmake --build build
+  cmake --install build
 
-  The install target respects DESTDIR for staged installations:
-
-    make DESTDIR=/tmp/staging install
-
-  CMake can also be used directly:
-
-    cmake -B build -DCMAKE_BUILD_TYPE=Release .
-    cmake --build build
-    cmake --install build
-
-  To build the tests:
-
-    cmake -B build_test -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug .
-    cmake --build build_test
-    ctest --test-dir build_test --output-on-failure
-
-Linking Against the Library:
-
-  After building, include the header and link with `-lcagekeygen`.
-
-    #include "libcagekeygen.h"
-
-    int main(void) {
-        uint8_t pk[AGE_KEY_BYTES], sk[AGE_KEY_BYTES];
-        age_error_t err = age_generate_keypair(pk, sk);
-        if (err) {
-            fprintf(stderr, "Error: %s\n", age_error_string(err));
-            return 1;
-        }
-        char pub_str[AGE_PUBLIC_KEY_BUF_SIZE];
-        age_public_key_to_string(pk, pub_str);
-        printf("Public key: %s\n", pub_str);
-        return 0;
-    }
-
-  Compile and link:
-
+LINKING WITHOUT INSTALLING:
+  After `make`, link directly:
     gcc -I./include myapp.c -L. -lcagekeygen -o myapp
-
-  On Windows, the library automatically links against `bcrypt` (provided
-  by the system) – no extra flags are needed when using CMake.
 
 
 USAGE
