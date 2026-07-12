@@ -1,0 +1,24 @@
+navbar:
+  - label: Home
+    url: index.html
+  - label: Installation
+    url: installation.html
+  - label: Quick Start
+    url: quick_start.html
+  - label: Usage
+    url: usage.html
+  - label: API Reference
+    url: api_reference.html
+sidebar:
+  - label: Home
+    url: index.html
+  - label: Installation
+    url: installation.html
+  - label: Quick Start
+    url: quick_start.html
+  - label: Usage
+    url: usage.html
+  - label: API Reference
+    url: api_reference.html
+site_name: "libcagekeygen"
+base_url: "https://mroczect.github.io/libcagekeygen/"
